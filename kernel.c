@@ -36,6 +36,75 @@ void getRequest(void* __buff, int __socket){
     }
 }
 
+int httpParser(const char* __req){
+    
+    /**
+     * Confirm the http protocol using regex.
+     * Perhaps there should be another mechanics.
+     */
+    regex_t http_regex;
+
+    if (regcomp(&http_regex, HTTP_REGEX, REG_EXTENDED) != 0){
+        fprintf(stderr, "Fail to compile regex for http request pattern --- Terminating\n");
+        exit(EXIT_FAILURE);
+    }
+    if (regexec(&http_regex, __req, 0, NULL, REG_NOTEOL) != 0){
+        return -1;
+    }
+
+    /* PARSING
+
+        Http requests' lines are ended with \r\n
+
+        Because the structure of the first line and the rest is not the same:
+        Step 1: Parse the first line for Method, URL, and HTTP version
+            - The char *metadata[3] has 3 elements because we need to get 3 pieces of info from the first line: METHOD /PATH HTTP_VERSION
+        Step 2: Parse the headers
+     */
+    int position = 0;
+    int index = 0;
+    char *metadata[3];
+    while ( ((*(__req + position)) != '\r') && ((*(__req + position)) != '\n') ){
+        // Parse the first line
+        int offset = 1;
+        while ( ((*(__req + position + offset)) != '\r') && ((*(__req + position + offset)) != ' ') ){
+            offset++;
+        }
+
+        metadata[index] = (char*)malloc(offset + 1);
+        memset(metadata[index], '\0', offset + 1);
+        strncpy(metadata[index], (__req + position), offset);
+        position += (offset + 1);
+        index++;
+    }
+    
+    printf("METHOD is %s\n", metadata[0]);
+    printf("PATH is %s\n", metadata[1]);
+    printf("HTTP VERSION is %s\n", metadata[2]);
+    free(metadata[0]);
+    free(metadata[1]);
+    free(metadata[2]);
+    // Parse the headers
+    /*
+    while (1){
+        int offset = 1;
+
+        for (; ((*(char*)(__req + position)) == "\n"); position++);
+        position++;
+
+        while ((*(char*)(__req + position + offset)) != ":"){
+            offset++;
+        }
+        // Read the header
+        
+        
+    }
+    */
+    
+    return 0;
+    
+}
+
 
 
 

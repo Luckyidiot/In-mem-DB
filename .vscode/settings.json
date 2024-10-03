@@ -1,6 +1,7 @@
 {
     "files.associations": {
         "cstdlib": "c",
-        "socket.h": "c"
+        "socket.h": "c",
+        "pty.h": "c"
     }
 }

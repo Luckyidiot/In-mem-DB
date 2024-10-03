@@ -1,8 +1,8 @@
 #include "kernel.h"
 #include "utils.h"
 
-
 int main(int argc, char** argv){
+    
     
     int server = createServer();
     
@@ -16,10 +16,10 @@ int main(int argc, char** argv){
         
         char* buffer;
         getRequest(buffer, client);
-        
+        int a = httpParser(buffer);
         printf("%s\n", buffer);
     }
     
-
+    
     return 0;
 }
