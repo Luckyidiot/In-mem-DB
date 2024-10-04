@@ -2,16 +2,22 @@
 #define SERVER
 #include "env.h"
 
-struct headers{
+typedef struct header{
     char *head;
     char *val;
+} header;
+
+struct http{
+    char *method;
+    char *path;
+    char *http_version;
+    header *headers;
 };
 
-typedef struct http{
-    int path;
-    char method;
-} http;
 
 int createServer();
+
 void read_req(void*, int);
-int httpParser(const char*, http*);
+int httpParser(const char*);
+
+int handleClient(int);
