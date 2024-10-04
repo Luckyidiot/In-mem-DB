@@ -7,7 +7,7 @@ struct headers{
     char* val;
 };
 
-struct metadata{
+struct req_comp{
     char *method;
     char *path;
     char *http_version;
@@ -16,4 +16,4 @@ struct metadata{
 
 int createServer();
 void getRequest(void*, int);
-int httpParser(const char*);
+int httpParser(const char*, struct req_comp*);

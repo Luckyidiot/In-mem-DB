@@ -36,14 +36,14 @@ void getRequest(void* __buff, int __socket){
     }
 }
 
-int httpParser(const char* __req){
+int httpParser(const char *__req, struct req_comp *request){
     
     /**
      * Confirm the http protocol using regex.
-     * Perhaps there should be another mechanics.
+     * 
+     * Cannot put http_regex outside and pass into this func => Segmentation fault
      */
     regex_t http_regex;
-
     if (regcomp(&http_regex, HTTP_REGEX, REG_EXTENDED) != 0){
         fprintf(stderr, "Fail to compile regex for http request pattern --- Terminating\n");
         exit(EXIT_FAILURE);
@@ -78,12 +78,10 @@ int httpParser(const char* __req){
         index++;
     }
     
-    printf("METHOD is %s\n", metadata[0]);
-    printf("PATH is %s\n", metadata[1]);
-    printf("HTTP VERSION is %s\n", metadata[2]);
-    free(metadata[0]);
-    free(metadata[1]);
-    free(metadata[2]);
+    //request->method = metadata[0];
+    //request->path = metadata[1];
+    //request->http_version = metadata[2];
+
     // Parse the headers
     /*
     while (1){

@@ -3,6 +3,7 @@
 
 int main(int argc, char** argv){
     
+
     
     int server = createServer();
     
@@ -15,9 +16,20 @@ int main(int argc, char** argv){
         check_error(client, "Fail to accept new connection");
         
         char* buffer;
+        struct req_comp request;
+
         getRequest(buffer, client);
-        int a = httpParser(buffer);
-        printf("%s\n", buffer);
+        int parser_status = httpParser(buffer, &request);
+        
+        /*
+        printf("METHOD is %s\n", request.method);
+        printf("PATH is %s\n", request.path);
+        printf("HTTP version is %s\n", request.http_version);
+
+        free(request.method);
+        free(request.path);
+        free(request.http_version);
+        */
     }
     
     
