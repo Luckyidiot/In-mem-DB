@@ -10,5 +10,4 @@ EXE = server
 all: $(EXE)
 	
 server: $(SERVER_SRC) $(SERVER_WITHPY)
-	#gcc -Wall $(PYTHON_FLAGS) $(SERVER_WITHPY) $(PYTHON_LINKS) $(SERVER_SRC) -o $@
-	gcc -Wall $(SERVER_SRC) -o $@
+	gcc -g -Wall $(SERVER_SRC) -o $@

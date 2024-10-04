@@ -3,17 +3,15 @@
 #include "env.h"
 
 struct headers{
-    char* head;
-    char* val;
+    char *head;
+    char *val;
 };
 
-struct req_comp{
-    char *method;
-    char *path;
-    char *http_version;
-};
-
+typedef struct http{
+    int path;
+    char method;
+} http;
 
 int createServer();
-void getRequest(void*, int);
-int httpParser(const char*, struct req_comp*);
+void read_req(void*, int);
+int httpParser(const char*, http*);

@@ -27,16 +27,17 @@ int createServer(){
 }
 
 
-void getRequest(void* __buff, int __socket){
+void read_req(void* __buff, int __socket){
     int index = 0;
     ssize_t nbytes = 0;
 
     while ((nbytes = recv(__socket, (__buff + index), BANDWIDTH, 0)) > 0){
         index += nbytes;
     }
+    printf("Size %ld\n", strlen(__buff));
 }
 
-int httpParser(const char *__req, struct req_comp *request){
+int httpParser(const char *__req, http *request){
     
     /**
      * Confirm the http protocol using regex.
@@ -74,10 +75,14 @@ int httpParser(const char *__req, struct req_comp *request){
         metadata[index] = (char*)malloc(offset + 1);
         memset(metadata[index], '\0', offset + 1);
         strncpy(metadata[index], (__req + position), offset);
+
         position += (offset + 1);
         index++;
     }
     
+    free(metadata[0]);
+    free(metadata[1]);
+    free(metadata[2]);
     //request->method = metadata[0];
     //request->path = metadata[1];
     //request->http_version = metadata[2];
