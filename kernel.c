@@ -27,119 +27,40 @@ int createServer(){
 }
 
 
-void read_req(void* __buff, int __socket){
-    int index = 0;
-    ssize_t nbytes = 0;
-
-    while ((nbytes = recv(__socket, (__buff + index), BANDWIDTH, 0)) > 0){
-        index += nbytes;
-    }
-}
-
-int httpParser(const char *__req){
-    
+int read_req(void* raw_req, int __socket){
     /**
-     * Confirm the http protocol using regex.
+     * Read the request from __socket into raw_req.
+     * return 1 if succeed to read, otherwise return -1
      * 
-     * Cannot put http_regex outside and pass into this func => Segmentation fault
+     * Use buffer because the request may be insanely long, and in which case the size
+     * of raw_req needs to be expanded constantly.
      */
-    regex_t http_regex;
-    if (regcomp(&http_regex, HTTP_REGEX, REG_EXTENDED) != 0){
-        fprintf(stderr, "Fail to compile regex for http request pattern --- Terminating\n");
-        exit(EXIT_FAILURE);
+    char buffer[BANDWIDTH];
+    memset(buffer, '\0', BANDWIDTH);
+    int offset = 0;
+    ssize_t nbytes = 0;
+    while ((nbytes = recv(__socket, buffer, BANDWIDTH, 0)) > 0){
+        raw_req = realloc(raw_req, (nbytes + offset));
+        memcpy((raw_req + offset), buffer, nbytes);
+        memset(buffer, '\0', BANDWIDTH);
+        offset += nbytes;
     }
-    if (regexec(&http_regex, __req, 0, NULL, REG_NOTEOL) != 0){
+    if (nbytes < 0){
+        perror("FAIL TO RECEIVE REQUEST:");
         return -1;
     }
-
-    /* PARSING
-
-        Http requests' lines are ended with \r\n
-
-        Because the structure of the first line and the rest is not the same:
-        Step 1: Parse the first line for Method, URL, and HTTP version
-            - The char *metadata[3] has 3 elements because we need to get 3 pieces of info from the first line: METHOD /PATH HTTP_VERSION
-        Step 2: Parse the headers
-     */
-    int position = 0;
-    int index = 0;
-    char *metadata[3];
-    while ( ((*(__req + position)) != '\r') && ((*(__req + position)) != '\n') ){
-        // Parse the first line
-        int offset = 1;
-        while ( ((*(__req + position + offset)) != '\r') && ((*(__req + position + offset)) != ' ') ){
-            offset++;
-        }
-
-        metadata[index] = (char*)malloc(offset + 1);
-        memset(metadata[index], '\0', offset + 1);
-        strncpy(metadata[index], (__req + position), offset);
-
-        position += (offset + 1);
-        index++;
-    }
-    
-    free(metadata[0]);
-    free(metadata[1]);
-    free(metadata[2]);
-    //request->method = metadata[0];
-    //request->path = metadata[1];
-    //request->http_version = metadata[2];
-
-    // Parse the headers
-    /*
-    while (1){
-        int offset = 1;
-
-        for (; ((*(char*)(__req + position)) == "\n"); position++);
-        position++;
-
-        while ((*(char*)(__req + position + offset)) != ":"){
-            offset++;
-        }
-        // Read the header
-        
-        
-    }
-    */
-    
-    return 0;
-    
+    return 1;
 }
 
-
-int handleClient(int __socket){
-    printf("Handling client request\n");
-    char *raw_req;
+int http_startline_parser(const char *raw_req, http *request){
     /**
-     * 1) Read the request in raw string
-     * 2) Parse it to get METHOD, PATH, HTTP_VERSION, HEADERS
-     * 3) Pass those data to python script
-     */
-
-    // Read the request in the raw string format
-    printf("Check point 0");
-    int index = 0;
-    printf("Check point 1");
-    ssize_t nbytes = 0;
-    printf("Check point 2");
-    while ((nbytes = recv(__socket, (raw_req + index), BANDWIDTH, 0)) > 0){
-        index += nbytes;
-        printf("Read request\n");
-    }
-
-    printf("%s\n", raw_req);
-    /**
-     * Parse the raw request.
-     * This involves:
-     *      1) Check if this is http request using regex
-     *      2) Get the first line of the request
-     *      3) Get the headers
+     * Parse the start line of the http request only
      * 
-     * Due to the differences in the structure of the first line and the rest of the request, we have to separate them into 
-     * two steps.
+     * 1) This function also includes checking http format.
+     * 2) Pass the position of the header to headerpos, doing this can avoid re-iteration when we parse the header.
+     * 
+     * If it fails, it returns -1; otherwise it returns the position of the beginning of the header.
      */
-    // HTTP format check
     regex_t http_regex;
     if (regcomp(&http_regex, HTTP_REGEX, REG_EXTENDED) != 0){
         fprintf(stderr, "Fail to compile regex for http request pattern --- Terminating\n");
@@ -152,46 +73,81 @@ int handleClient(int __socket){
 
     // Get the first line
     int position = 0;
-    char *metadata[3];
-
     for (int i = 0; i < 3; i++){
         int offset = 1;
         while ( ((*(raw_req + position + offset)) != '\r') && ((*(raw_req + position + offset)) != ' ') ){
             offset++;
         }
 
-        metadata[i] = (char*)malloc(offset + 1);
-        memset(metadata[i], '\0', offset + 1);
-        strncpy(metadata[i], (raw_req + position), offset);
-
-        position += (offset + 1);
-    }
-    position++;
-
-    printf("METHOD is %s\n", metadata[0]);
-    printf("PATH is %s\n", metadata[1]);
-    printf("HTTP version is %s\n", metadata[2]);
-
-    free(metadata[0]);
-    free(metadata[1]);
-    free(metadata[2]);
-
-    return 0;
-    /*
-    while ( ((*(raw_req + position)) != '\r') && ((*(raw_req + position)) != '\n') ){
-        int offset = 1;
-        while ( ((*(raw_req + position + offset)) != '\r') && ((*(raw_req + position + offset)) != ' ') ){
-            offset++;
+        switch (i){
+        case 0:
+            // get the METHOD
+            request->method = (char*)malloc(offset + 1);
+            memset(request->method, '\0', offset + 1);
+            strncpy(request->method, (raw_req + position), offset);
+            break;
+        case 1:
+            // get the PATH
+            request->path = (char*)malloc(offset + 1);
+            memset(request->path, '\0', offset + 1);
+            strncpy(request->path, (raw_req + position), offset);
+            break;
+        case 2:
+            // get the PATH
+            request->http_version = (char*)malloc(offset + 1);
+            memset(request->http_version, '\0', offset + 1);
+            strncpy(request->http_version, (raw_req + position), offset);
+            break;
+        default:
+            break;
         }
-
-        metadata[index] = (char*)malloc(offset + 1);
-        memset(metadata[index], '\0', offset + 1);
-        strncpy(metadata[index], (raw_req + position), offset);
-
         position += (offset + 1);
-        index++;
     }
-    */
+
+    position++;
+    return position;
+}
+
+
+int handleClient(int __socket){
+    /**
+     * 1) Read the request in raw string
+     * 2) Parse it to get METHOD, PATH, HTTP_VERSION, HEADERS
+     * 3) Pass those data to python script
+     * 
+     * If it fails, return -1; otherwise, if succeed, return 1
+     */
+
+    // Read the request in the raw string format
+    char *raw_req = (char*)malloc(1);
+    if (read_req(raw_req, __socket) == -1){
+        return -1;
+    }
+
+    /**
+     * Parse the raw request.
+     * This involves:
+     *      1) Get the first line of the request
+     *      2) Get the headers
+     * 
+     * Due to the differences in the structure of the first line and the rest of the request, we have to separate them into 
+     * two steps.
+     */
+    http request;
+    int header_pos;
+    if ((header_pos = http_startline_parser(raw_req, &request)) == -1){
+        sprintf(stderr, "Fail to parse the request\n");
+        return -1;
+    }
+
+
+
+
+    free(request.method);
+    free(request.path);
+    free(request.http_version);
+    free(raw_req);
+    return 0;
 
 }
 
