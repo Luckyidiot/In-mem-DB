@@ -15,7 +15,6 @@ int main(int argc, char **argv){
         int client = accept(server, NULL, NULL);
         check_error(client, "Fail to accept new connection");
         
-        printf("Connection accepted %d\n", client);
         handleClient(client);
         
         shutdown(client, SHUT_RD);

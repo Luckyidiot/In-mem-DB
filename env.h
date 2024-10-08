@@ -19,6 +19,6 @@
     #define SERVER_ADDR_NAMESPACE   PF_INET
     #define MAX_PENDING_REQUESTS    50
     #define BANDWIDTH               256
-    #define HTTP_REGEX              "^(GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS|CONNECT) /.* HTTP/1\\.[01]\r\n.*"
+    #define HTTP_REGEX              "^(GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS|CONNECT) /.* (HTTP|HTTPS)/1\\.[01]\r\n.*"
 
 #endif

@@ -3,6 +3,9 @@
 
 
 int createServer(){
+    /**
+     * Create the tcp/http server running on port 6309
+     */
     int socketfd;
     struct sockaddr_in server_address;
 
@@ -52,7 +55,7 @@ int read_req(void* raw_req, int __socket){
     return 1;
 }
 
-int http_startline_parser(const char *raw_req, http *request){
+int http_startline_parser(const char *raw_req, http_req *request){
     /**
      * Parse the start line of the http request only
      * 
@@ -108,6 +111,41 @@ int http_startline_parser(const char *raw_req, http *request){
     return position;
 }
 
+int http_headers_parser(const char* raw_req, int header_pos, http_header* header){
+    /**
+     * PARSING HEADER
+     * Due to the format of the header
+     *      header: val
+     * We will iterate twice to retrieve the header and the value.
+     * This function can only parse one line of header at a time.
+     * 
+     * If it reaches to the end of the header part, it will return -1.
+     * Otherwise it will return the position of the next line of header.
+     */
+
+    if (*(raw_req + header_pos) == '\r'){
+        return -1;
+    }
+    int offset = 1;
+    while (*(raw_req + header_pos + offset) != ':'){
+        offset++;
+    }
+    header->head = (char*)malloc(offset + 1);
+    memset(header->head, '\0', offset + 1);
+    strncpy(header->head, (raw_req + header_pos), offset);
+
+    header_pos += (offset + 2);
+    offset = 1;
+    while (*(raw_req + header_pos + offset) != '\r'){
+        offset++;
+    }
+    header->val = (char*)malloc(offset + 1);
+    memset(header->val, '\0', offset + 1);
+    strncpy(header->val, (raw_req + header_pos), offset);
+
+    header_pos += (offset + 2);
+    return header_pos;
+}
 
 int handleClient(int __socket){
     /**
@@ -133,22 +171,31 @@ int handleClient(int __socket){
      * Due to the differences in the structure of the first line and the rest of the request, we have to separate them into 
      * two steps.
      */
-    http request;
-    int header_pos;
+    //Parse the start line
+    http_req request;
+    int header_pos = 0;
     if ((header_pos = http_startline_parser(raw_req, &request)) == -1){
-        sprintf(stderr, "Fail to parse the request\n");
+        fprintf(stderr, "Fail to parse the request\n");
         return -1;
     }
+    //Parse the headers
+    http_header headers[50];
+    for (int i = 0; i < 50; i++){
+        //The header_pos will be updated constantly.
+        header_pos = http_headers_parser(raw_req, header_pos, &headers[i]);
+        if (header_pos == -1){
+            break;
+        }
+    }
 
-
-
+    // Call python script to handle the request from the client.
+    
 
     free(request.method);
     free(request.path);
     free(request.http_version);
     free(raw_req);
     return 0;
-
 }
 
 
