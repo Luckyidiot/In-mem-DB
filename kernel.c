@@ -188,7 +188,9 @@ int handleClient(int __socket){
         }
     }
 
-    // Call python script to handle the request from the client.
+    /**
+     * Handling the request :: Call Python script and pass the request and headers into it.
+     */
     
 
     free(request.method);

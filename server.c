@@ -2,7 +2,6 @@
 #include "utils.h"
 
 
-
 int main(int argc, char **argv){
     
     int server = createServer();
@@ -14,12 +13,13 @@ int main(int argc, char **argv){
         printf("Waiting...\n");
         int client = accept(server, NULL, NULL);
         check_error(client, "Fail to accept new connection");
-        
         handleClient(client);
-        
         shutdown(client, SHUT_RD);
     }
     
     shutdown(server, SHUT_RD);
+    
     return 0;
 }
+
+
