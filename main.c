@@ -1,7 +1,8 @@
 #include "kernel.h"
 #include "utils.h"
 
-
+// FAM: fast access memory
+// fam://username@localhost:port/dbnumber/password/[attribute]=[value]
 int main(int argc, char **argv){
     
     int server = createServer();
@@ -14,6 +15,7 @@ int main(int argc, char **argv){
         int client = accept(server, NULL, NULL);
         check_error(client, "Fail to accept new connection");
         handleClient(client);
+        
         shutdown(client, SHUT_RD);
     }
     
@@ -21,5 +23,3 @@ int main(int argc, char **argv){
     
     return 0;
 }
-
-

@@ -191,8 +191,6 @@ int handleClient(int __socket){
     /**
      * Handling the request :: Call Python script and pass the request and headers into it.
      */
-    
-
     free(request.method);
     free(request.path);
     free(request.http_version);
