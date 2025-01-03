@@ -6,5 +6,5 @@ EXE = fam
 
 all: $(EXE)
 	
-server: $(SERVER_SRC) $(SERVER_WITHPY)
+fam: $(SERVER_SRC) $(SERVER_WITHPY)
 	gcc -g -Wall $(SERVER_SRC) -o $@
