@@ -1,32 +1,20 @@
 #pragma once
-#define SERVER
-#include "../env.h"
-
-#include <iostream>
+#define REQUEST
 #include <vector>
 #include <string>
 #include <regex>
 #include <map>
+#include <iostream>
+#include "../env.h"
 
-class FAM_request{
+class Request{
     // fam://username@localhost:port/dbnumber/password/command?[attribute]=[value]
     private:
         std::vector<std::string> request;
         std::map<std::string, std::string> query_map;
-        
-        /**
-        * REQUEST PARSING
-        *
-        * PARSE the request into credentials and command. This also has request format's validation.
-        * This method is used the constructor.
-        *
-        *@return true if the given request string is valid; otherwise, return false.
-        */
-        bool parse(std::string raw_req);
-        
-        
     public:
-        FAM_request(const std::string raw_req);
+        Request(std::string raw_str);
+        static bool is_valid_format(std::string raw_str);
         
         /**
          * RETRIEVE THE METADATA

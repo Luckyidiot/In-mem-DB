@@ -2,20 +2,7 @@
 
 
 
-FAM_request::FAM_request(const std::string raw_req){
-    if (!parse(raw_req)){
-        // The format of the request is not valid.
-        std::cout << "Nope" << std::endl;
-    }
-    
-}
-
-// PRIVATE METHODS
-bool FAM_request::parse(std::string raw_str){
-    std::regex pattern(FAM_REGEX);
-    if (!std::regex_match(raw_str, pattern)){
-        return false;
-    }
+Request::Request(const std::string raw_str){
     
     // PARSE THE METADATA
     std::string raw_req = raw_str.substr(6);
@@ -52,7 +39,7 @@ bool FAM_request::parse(std::string raw_str){
     request = req;
     if (query_str_offset >= raw_str.length()){
         // Return immediately because there is not any query string
-        return true;
+        return;
     }
     
     // PARSE QUERY STRING
@@ -81,34 +68,40 @@ bool FAM_request::parse(std::string raw_str){
         }
     }
     
-    return true;
 }
 
+bool Request::is_valid_format(std::string raw_str){
+    std::regex pattern(FAM_REGEX);
+    if (std::regex_match(raw_str, pattern)){
+        return true;
+    }
+    return false;
+}
 
 // PUBLIC METHODS
-std::string FAM_request::username(){
+std::string Request::username(){
     return request[0];
 }
-std::string FAM_request::password(){
+std::string Request::password(){
     return request[4];
 }
-std::string FAM_request::port(){
+std::string Request::port(){
     return request[2];
 }
-std::string FAM_request::host(){
+std::string Request::host(){
     return request[1];
 }
-std::string FAM_request::db(){
+std::string Request::db(){
     return request[3];
 }
-std::string FAM_request::command(){
+std::string Request::command(){
     return request[5];
 }
 
-std::map<std::string, std::string> FAM_request::all(){
+std::map<std::string, std::string> Request::all(){
     return query_map;
 }
-std::string FAM_request::get(std::string key, std::string def){
+std::string Request::get(std::string key, std::string def){
     try {
         return query_map.at(key);
     }
